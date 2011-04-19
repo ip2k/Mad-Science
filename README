@@ -1,0 +1,56 @@
+----==== Mad Science ====----
+WORK IN PROGRESS
+
+Mad Science is a testing / benchmarking framework in python targeting server configuration benchmarking. 
+Mad Science has this basic workflow: 
+Restart services so you start from a known status, 
+make one configuration change, 
+restart services to apply the change, 
+benchmark the server, 
+record the results.  
+
+Rinse, repeat.
+
+A test (actually 200 tests in this case) looks like this:
+
+# go through each value for thread_concurrency
+for i in range(1, 21):
+    replaceInConfig('thread_concurrency', 'thread_concurrency = %i' % (i), '/etc/my.cnf')
+# run 10 tests at each level
+    for x in range(1,11):
+        testid = 'mysql-' + str(i) + '-' + str(x)
+        doReset()
+        runSiege('100','10','urls-local.txt')
+
+
+Or maybe you want to test different SHM sizes in APC?
+
+shmsizes = [8,16,24,32,48,64,72,96,128,160,192,256,384,512]
+
+for i in shmsizes:
+    replaceInConfig('apc.shm_size', 'apc.shm_size = %i' % (i), '/etc/php.d/apc.ini')
+    for x in range(1,11):
+        testid = 'apc-shm-' + str(i) + '-' + str(x)
+        doReset()
+        runSiege('100','100','urls-local.txt')
+
+
+
+----==== Beaker ====----
+WORK IN PROGRESS
+
+Beaker is the statistics / graphing / analytical tool that works with Mad Science.  Right now it only parses Siege results based on your test selector.  Example that selects the "mysql-5*" tests:
+
+[root@bench2 sandbox]# python26 Beaker.py mysql-5
+Test ID selector: mysql-5
+Raw dump of dataset to parse: 
+{'hits': [1159, 1156, 0, 1172, 0, 1162, 1176, 510, 1179, 1170], 'short': [0.16, 0.22, 0.0, 0.25, 0.0, 0.19, 0.19, 0.41999999999999998, 0.20000000000000001, 0.19], 'concur': [92.129999999999995, 92.209999999999994, 0.0, 92.060000000000002, 0.0, 92.870000000000005, 91.609999999999999, 88.480000000000004, 91.629999999999995, 91.239999999999995], 'up': [100.0, 100.0, 0.0, 100.0, 0.0, 100.0, 100.0, 47.57, 100.0, 100.0], 'long': [14.92, 15.43, 0.0, 15.630000000000001, 0.0, 9.8300000000000001, 14.09, 15.41, 14.210000000000001, 15.34], 'resptime': [4.2999999999999998, 4.75, 0.0, 4.6500000000000004, 0.0, 3.3999999999999999, 4.5099999999999998, 4.8099999999999996, 4.5700000000000003, 4.4900000000000002], 'bw': [0.13, 0.12, 0.0, 0.12, 0.0, 0.16, 0.12, 0.10000000000000001, 0.12, 0.12], 'time': [54.07, 59.509999999999998, 341.94999999999999, 59.149999999999999, 344.94999999999999, 42.57, 57.93, 27.719999999999999, 58.780000000000001, 57.560000000000002], 'fail': [0, 0, 1000, 0, 1000, 0, 0, 562, 0, 0], 'ok': [1159, 1156, 0, 1172, 0, 1162, 1176, 515, 1179, 1170], 'trans': [21.440000000000001, 19.43, 0.0, 19.809999999999999, 0.0, 27.300000000000001, 20.300000000000001, 18.399999999999999, 20.059999999999999, 20.329999999999998], 'data': [7.0300000000000002, 6.9500000000000002, 0.0, 6.9900000000000002, 0.0, 6.9500000000000002, 7.0700000000000003, 2.73, 7.1399999999999997, 7.04]}
+
+Mean: 
+{'hits': 868.39999999999998, 'short': 0.182, 'concur': 73.222999999999999, 'up': 74.757000000000005, 'long': 11.486000000000001, 'resptime': 3.5479999999999996, 'bw': 0.099000000000000005, 'time': 110.41899999999998, 'fail': 256.19999999999999, 'ok': 868.89999999999998, 'trans': 16.707000000000001, 'data': 5.1899999999999995}
+
+Median: 
+{'hits': 1160.5, 'short': 0.19, 'concur': 91.620000000000005, 'up': 100.0, 'long': 14.565000000000001, 'resptime': 4.5, 'bw': 0.12, 'time': 58.355000000000004, 'fail': 0.0, 'ok': 1160.5, 'trans': 19.934999999999999, 'data': 6.9700000000000006}
+
+Standard Deviation: 
+{'hits': 501.58375837607286, 'short': 0.12016655108639841, 'concur': 38.609614821526861, 'up': 42.657309403612828, 'long': 6.2855304735028801, 'resptime': 1.9111706709065346, 'bw': 0.054252496102330017, 'time': 123.22752537481225, 'fail': 429.40004657661598, 'ok': 501.18913041330461, 'trans': 9.1290051179985898, 'data': 3.0460174362964865}
