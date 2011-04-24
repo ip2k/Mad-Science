@@ -95,7 +95,7 @@ def runCommandGetExit(somecommand):
 def doReset():
     runBlockingCommands('(/etc/init.d/mysqld stop; sleep 10; killall mysqld; sleep 10; killall -9 mysqld; sleep 10; /etc/init.d/mysqld restart)', \
         '(/etc/init.d/httpd stop; sleep 10; killall httpd; sleep 10; killall -9 httpd; sleep 10; /etc/init.d/httpd restart)', \
-        '/usr/nexkit/bin/magento r -cs /home/sipfourb/sip4-bench1.nexcess.net/html', \
+        '/usr/nexkit/bin/magento r -cs /home/sipfourb/sip4-bench1.example.net/html', \
         '/etc/init.d/memcached-multi restart')
     wait(30)
     return
