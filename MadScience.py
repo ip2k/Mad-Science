@@ -6,27 +6,29 @@ import time
 import string
 import re
 import urllib2
-import inspect
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import paramiko
 
 # ---- CONSTANTS ----
-const_sshhost= '127.0.0.1'
+const_debug = False
+const_sshhost= '207.32.179.180'
 const_sshuser= 'root'
-const_sshpass= 'YourRootPassword'
+const_sshpass= 'fpptNJxmKzfCfqpqLt7'
 const_prompt = '[root@sip4-bench1 ~]# '
 const_httpcheckurl = 'http://10.0.0.1/apparel.html'
+const_mysqlhost = '10.0.0.1'
 const_mysqluser = 'test'
 const_mysqlpass = 'test'
 const_mysqldbname = 'test'
 const_lswstestcmd = 'pgrep litespeed'
 const_apachetestcmd = 'pgrep -u apache httpd'
-const_debug = True
 # TODO: add abstractions for apache user, suexec user, path to html files
 
 
 ## {{{ http://code.activestate.com/recipes/576925/ (r4)
+import inspect
 
 def callee():
     return inspect.getouterframes(inspect.currentframe())[1][1:4]
@@ -163,7 +165,7 @@ def runCommandGetExit(somecommand):
 def doReset():
     runBlockingCommands('(/etc/init.d/mysqld stop; sleep 10; killall mysqld; sleep 10; killall -9 mysqld; sleep 10; /etc/init.d/mysqld restart)', \
         '(/etc/init.d/httpd stop; sleep 10; killall httpd; sleep 10; killall -9 httpd; sleep 10; /etc/init.d/httpd restart)', \
-        '/usr/nexkit/bin/magento r -cs /home/sipfourb/sip4-bench1.example.net/html', \
+        '/usr/nexkit/bin/magento r -cs /home/sipfourb/sip4-bench1.nexcess.net/html', \
         '/etc/init.d/memcached-multi restart')
     wait(30)
     verifyHttp()
@@ -188,11 +190,11 @@ def fixMagento():
 
     global currentwebserver
     logEvent('Fixing Magento permissions, cache, and sessions')
-    runBlockingCommands('/usr/nexkit/bin/magento r -cops /home/sipfourb/sip4-bench1.example.net/html')
+    runBlockingCommands('/usr/nexkit/bin/magento r -cops /home/sipfourb/sip4-bench1.nexcess.net/html')
     if currentwebserver == 'lsws':
-        runBlockingCommands('chown -R sipfourb.sipfourb /home/sipfourb/sip4-bench1.example.net/html')
+        runBlockingCommands('chown -R sipfourb.sipfourb /home/sipfourb/sip4-bench1.nexcess.net/html')
     if currentwebserver == 'apache':
-        runBlockingCommands('chown -R apache.apache /home/sipfourb/sip4-bench1.example.net/html')
+        runBlockingCommands('chown -R apache.apache /home/sipfourb/sip4-bench1.nexcess.net/html')
     return
 
 def replaceInConfig(search, replace, file):
@@ -390,14 +392,72 @@ def runSiege(threads, reps, urlsfile):
         print type(inst)
         print inst.args
         print inst
-        print str(child)
+        #print str(child)
         logError('Siege exited with error! ' + tolog)
         pass
     else:
         logOk('Siege finished without errors ' + tolog)
 
     return
+"""
+const_mysqlhost = '10.0.0.1'
+const_mysqluser = 'test'
+const_mysqlpass = 'test'
+const_mysqldbname = 'test'
+"""
 
+def runSysbench(threads, requests, tablesize):
+    if const_debug:
+        print "Function %s called from function %s" % (callee(), caller())
+
+    if threads and requests and tablesize:
+        global testid, const_mysqlhost, const_mysqluser, const_mysqlpass, const_mysqldbname
+        tolog = 'threads: ' + threads + ' requests: ' + requests + ' tablesize: ' + tablesize
+        mycmd = 'sysbench --num-threads=' + str(threads) + ' --max-requests=' + str(requests) + ' --test=oltp --mysql-table-engine=innodb --oltp-test-mode=complex --oltp-table-size=' + str(tablesize) + ' --db-driver=mysql --mysql-user=' + str(const_mysqluser) + ' --mysql-password=' + str(const_mysqlpass) + '--mysql-db=' + str(const_mysqldbname) + ' --mysql-host=' + str(const_mysqlhost)
+        print mycmd
+        return
+"""
+try:
+            child = pexpect.spawn(mycmd + ' prepare')
+            child.expect('')
+            child = pexpect.spawn (runstring)
+            fout = file('siege.log' , 'w')
+            child.logfile = fout
+            logCustom('Siege started', tolog)
+
+            #child.expect('done.')
+            child.expect('(?P<hits>[0-9]+)\shits.*' +
+            'Availability:\s+(?P<up>[0-9]+\.[0-9]{2})\s%.*' +
+            'Elapsed\stime:\s+(?P<time>[0-9]+\.[0-9]+)\ssecs.*' +
+            'Data transferred:\s+(?P<data>[0-9]+\.[0-9]+)\sMB.*' +
+            'Response time:\s+(?P<resptime>[0-9]+\.[0-9]+)\ssecs.*' +
+            'Transaction rate:\s+(?P<trans>[0-9]+\.[0-9]+)\strans/sec.*' +
+            'Throughput:\s+(?P<bw>[0-9]+\.[0-9]+)\sMB/sec.*' +
+            'Concurrency:\s+(?P<concur>[0-9]+\.[0-9]+).*' +
+            'Successful transactions:\s+(?P<ok>[0-9]+).*' +
+            'Failed transactions:\s+(?P<fail>[0-9]+).*' +
+            'Longest transaction:\s+(?P<long>[0-9]+\.[0-9]+).*' +
+            'Shortest transaction:\s+(?P<short>[0-9]+\.[0-9]+)', timeout=None)
+
+            resultsdict = child.match.groupdict()
+            resultsdict['thetime'] = time.time()
+            resultsdict['testid'] = testid
+            todo = 'INSERT INTO siege VALUES(\'%(testid)s\', \'%(thetime)s\', \'%(hits)s\', \'%(up)s\', \'%(time)s\', \'%(data)s\', \'%(resptime)s\', \'%(trans)s\', \'%(bw)s\', \'%(concur)s\', \'%(ok)s\', \'%(fail)s\', \'%(long)s\', \'%(short)s\' )' % resultsdict
+            print('Siege returned result! TEST ID: ' + str(resultsdict['testid']) + ' TIME: ' + str(resultsdict['thetime']))
+            print resultsdict
+            db.execute(todo)
+            db.commit()
+
+        except Exception as inst:
+            print type(inst)
+            print inst.args
+            print inst
+            #print str(child)
+            logError('Sysbench exited with error! ' + tolog)
+            pass
+        else:
+            logOk('Sysbench finished without errors ' + tolog)
+"""
 
 # ---- INIT ----
 testid = "INIT"
@@ -418,59 +478,21 @@ db.commit()
 #runSiege('100', '100', 'urls-local.txt')
 #doReset()
 
+
 # ---- ea vs apc on apache and lsws ----
-setWebServer('apache')
-setOpcodeCache('apc')
-
-for i in range(1, 11):
-    testid = 'apache-apc-50-' + str(i)
-    doReset()
-    runSiege('50', '100', 'urls-local.txt')
-
-for i in range(1, 11):
-    testid = 'apache-apc-100-' + str(i)
-    doReset()
-    runSiege('100', '100', 'urls-local.txt')
-
-
-
-setOpcodeCache('eaccelerator')
-
-for i in range(1, 11):
-    testid = 'apache-ea-50-' + str(i)
-    doReset()
-    runSiege('50', '100', 'urls-local.txt')
-
-for i in range(1, 11):
-    testid = 'apache-ea-100-' + str(i)
-    doReset()
-    runSiege('100', '100', 'urls-local.txt')
-
-
 
 setWebServer('lsws')
 setOpcodeCache('apc')
 
 for i in range(1, 11):
-    testid = 'lsws-apc-50-' + str(i)
+    testid = 'lsws-411-50-' + str(i)
     doReset()
     runSiege('50', '100', 'urls-local.txt')
 
 for i in range(1, 11):
-    testid = 'lsws-apc-100-' + str(i)
+    testid = 'lsws-411-100-' + str(i)
     doReset()
     runSiege('100', '100', 'urls-local.txt')
 
 
-setOpcodeCache('eaccelerator')
-
-for i in range(1, 11):
-    testid = 'lsws-ea-50-' + str(i)
-    doReset()
-    runSiege('50', '100', 'urls-local.txt')
-
-for i in range(1, 11):
-    testid = 'lsws-ea-100-' + str(i)
-    doReset()
-    runSiege('100', '100', 'urls-local.txt')
-print "Reached End!"
+print "Reached end!"

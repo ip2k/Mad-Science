@@ -54,3 +54,23 @@ Median:
 
 Standard Deviation: 
 {'hits': 501.58375837607286, 'short': 0.12016655108639841, 'concur': 38.609614821526861, 'up': 42.657309403612828, 'long': 6.2855304735028801, 'resptime': 1.9111706709065346, 'bw': 0.054252496102330017, 'time': 123.22752537481225, 'fail': 429.40004657661598, 'ok': 501.18913041330461, 'trans': 9.1290051179985898, 'data': 3.0460174362964865}
+
+You can also use it to export data to CSV files.  Please see Beaker.py --help for the most up-to-date documentation.
+
+ Usage: python26 Beaker.py [OPTION]... [test id selector]
+
+    -h, --help
+            This message (Usage)
+
+    -f sqlitedb, --db=sqlitedb
+            Parse [sqlitedb].  If none given, the default sqlitedb file name is './resultdb.sqlite'
+
+    -e outputCSVFile, --csv=outputCSVFile
+            Export siege results to CSV file.  Can be optionally used with a test ID selector to only export a subset of the results.
+
+    "test id selector" should be a test id pattern to match against; 'apache-' would match 'apache-1' through 'apache-9999' and also 
+'apache-vs-something-1
+
+    If no test id selector is given, a list of all test IDs in the SQLite database will be shown.
+    
+
