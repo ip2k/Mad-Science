@@ -92,7 +92,7 @@ def main(argv):
     csvfilename = None # need to set this to some sane default because ensureValidTestID() won't work without it
     try:
         sqlitefile = 'resultdb.sqlite'
-        opts, args = getopt.getopt(argv, 'hf:e:', ['help', 'db=', 'csv='])
+        opts, args = getopt.getopt(argv, 'hf:e:', ('help', 'db=', 'csv='))
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -114,8 +114,8 @@ def main(argv):
     myquery = 'SELECT test_id, date, hits, up, time, data, resptime, trans, bw, concur, ok, fail, long, short FROM siege WHERE test_id LIKE \'' + str(sometestid) + '%\''
 
     #todo = ['hits', 'up', 'time', 'data', 'resptime', 'trans', 'bw', 'concur', 'ok', 'fail', 'long', 'short']
-    floats = ['up', 'time', 'data', 'resptime', 'trans', 'bw', 'concur', 'long', 'short']
-    ints = ['hits', 'ok', 'fail']
+    floats = ('up', 'time', 'data', 'resptime', 'trans', 'bw', 'concur', 'long', 'short')
+    ints = ('hits', 'ok', 'fail')
     # todo is a dict with each key as the col name and each val as a list containing all the vals
 
     """
