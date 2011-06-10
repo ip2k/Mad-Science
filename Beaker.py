@@ -24,6 +24,7 @@ def getSQLiteConn():
     dbconn = sqlite3.connect(sqlitefile)
     dbconn.row_factory = sqlite3.Row
     c = dbconn.cursor()
+    return
 
 def usage():
     print """ Usage: python26 Beaker.py [OPTION]... [test id selector]
@@ -43,6 +44,7 @@ def usage():
     If no test id selector is given, a list of all test IDs in the SQLite database will be shown.
     """
     sys.exit(0)
+    return
 
 def writecsv(outputFile, testIDSelector):
     """
@@ -63,12 +65,33 @@ def writecsv(outputFile, testIDSelector):
         writer.writerow(thisrow)
     print "Done exporting to", outputFile
     print "Please see http://www.sqlite.org/sqlite.html for more data export options via SQLite directly"
+    return
+
+def ensureValidTestID():
+    """
+    Ensures that a valid Test ID Selector is supplied.
+
+    Inputs: none (implied: last element of sys.argv)
+    Returns: none (implied: testIDSelector)
+    Side Effects: global testIDSelector gets set to a valid Test ID Selector
+    """
+
+    global sometestid
+    try:
+        sometestid = str(sys.argv[-1])
+    except NameError:
+        sometestid = None
+    if sometestid in (sqlitefile, csvfilename, None):
+        #usage()
+        sometestid= '%'
+    return
 
 def main(argv):
     global sqlitefile
+    global csvfilename
+    csvfilename = None # need to set this to some sane default because ensureValidTestID() won't work without it
     try:
         sqlitefile = 'resultdb.sqlite'
-        testselector = sys.argv[-1]
         opts, args = getopt.getopt(argv, 'hf:e:', ['help', 'db=', 'csv='])
     except getopt.GetoptError:
         usage()
@@ -77,17 +100,13 @@ def main(argv):
             usage()
         elif opt in ('-f', '--db='):
             sqlitefile = arg
+            ensureValidTestID()
         elif opt in ('-e','--csv='):
-            writecsv(arg, testselector)
+            csvfilename = arg
+            ensureValidTestID()
+            writecsv(csvfilename, sometestid)
             sys.exit(0)
 # ---- INIT ----
-    try:
-        sometestid = str(sys.argv[-1])
-    except NameError:
-        sometestid = None
-    if sometestid == sqlitefile or sometestid is None:
-        #usage()
-        testIDSelector = '%'
 #    dbconn = sqlite3.connect(sqlitefile)
 #    dbconn.row_factory = sqlite3.Row
 #    c = dbconn.cursor()
@@ -163,6 +182,7 @@ def main(argv):
     # select test_id, datetime(date, 'unixepoch') from siege where test_id = 'mysql-1-1';
     #print mydict['trans']
     # ---- MAIN ----
+    return
 
 if __name__ == "__main__":
     main(sys.argv[1:])
