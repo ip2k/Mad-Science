@@ -13,10 +13,10 @@ with warnings.catch_warnings():
 
 # ---- CONSTANTS ----
 const_debug = False
-const_sshhost= '207.32.179.180'
+const_sshhost= '10.0.0.1'
 const_sshuser= 'root'
-const_sshpass= 'fpptNJxmKzfCfqpqLt7'
-const_prompt = '[root@sip4-bench1 ~]# '
+const_sshpass= 'some-secure-password'
+const_prompt = '[root@server ~]# '
 const_httpcheckurl = 'http://10.0.0.1/apparel.html'
 const_mysqlhost = '10.0.0.1'
 const_mysqluser = 'test'
